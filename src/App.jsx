@@ -1,88 +1,81 @@
-import { useState } from 'react';
-import { useAuth } from './hooks/useAuth';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import ProtectedRoute from './routes/ProtectedRoute';
+import PatientLayout from './layouts/PatientLayout';
+import AdminLayout from './layouts/AdminLayout';
+
+// Public pages
+import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegistrationPage from './pages/RegistrationPage';
-import ProtectedRoute from './routes/ProtectedRoute';
 
-// --- Simulated admin-only page to test role blocking ---
-function AdminOnlyPage() {
+// Patient pages
+import PatientDashboardPage from './pages/patient/PatientDashboardPage';
+import DoctorsPage from './pages/patient/DoctorsPage';
+import DoctorProfilePage from './pages/patient/DoctorProfilePage';
+import BookAppointmentPage from './pages/patient/BookAppointmentPage';
+import BookingConfirmationPage from './pages/patient/BookingConfirmationPage';
+import MyAppointmentsPage from './pages/patient/MyAppointmentsPage';
+import AppointmentDetailsPage from './pages/patient/AppointmentDetailsPage';
+
+// Admin pages
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import ManageDoctorsPage from './pages/admin/ManageDoctorsPage';
+import AddDoctorPage from './pages/admin/AddDoctorPage';
+import EditDoctorPage from './pages/admin/EditDoctorPage';
+import ManageSlotsPage from './pages/admin/ManageSlotsPage';
+import CreateSlotsPage from './pages/admin/CreateSlotsPage';
+import ManageAppointmentsPage from './pages/admin/ManageAppointmentsPage';
+
+export default function App() {
   return (
-    <ProtectedRoute requireAdmin>
-      <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-lg w-full">
-        <h2 className="text-2xl font-bold text-blue-600 mb-2">Admin Area</h2>
-        <p className="text-gray-600">Only admins can see this content.</p>
-      </div>
-    </ProtectedRoute>
+    <BrowserRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegistrationPage />} />
+
+        {/* Patient Routes */}
+        <Route
+          path="/patient"
+          element={
+            <ProtectedRoute requireAdmin={false}>
+              <PatientLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<PatientDashboardPage />} />
+          <Route path="doctors" element={<DoctorsPage />} />
+          <Route path="doctors/:id" element={<DoctorProfilePage />} />
+          <Route path="book/:doctorId" element={<BookAppointmentPage />} />
+          <Route path="booking-confirmation" element={<BookingConfirmationPage />} />
+          <Route path="appointments" element={<MyAppointmentsPage />} />
+          <Route path="appointments/:id" element={<AppointmentDetailsPage />} />
+        </Route>
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="doctors" element={<ManageDoctorsPage />} />
+          <Route path="doctors/add" element={<AddDoctorPage />} />
+          <Route path="doctors/edit/:id" element={<EditDoctorPage />} />
+          <Route path="slots" element={<ManageSlotsPage />} />
+          <Route path="slots/create" element={<CreateSlotsPage />} />
+          <Route path="appointments" element={<ManageAppointmentsPage />} />
+        </Route>
+
+        {/* Fallback route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-function App() {
-  const { user, profile, signOut } = useAuth();
-  const [showLogin, setShowLogin] = useState(true);
-  const [showAdminTest, setShowAdminTest] = useState(false);
-
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-
-      {/* Navbar */}
-      <header className="w-full bg-blue-600 p-4 absolute top-0 text-white flex justify-between items-center shadow-md">
-        <h1 className="text-xl font-bold">SwiftCare — Phase 5 Test</h1>
-        {user && (
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setShowAdminTest((v) => !v)}
-              className="bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded text-sm font-semibold"
-            >
-              {showAdminTest ? 'Back to Welcome' : 'Test Admin Route'}
-            </button>
-            <button
-              onClick={signOut}
-              className="bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded text-sm font-semibold"
-            >
-              Logout
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* Main Content */}
-      <main className="mt-16 w-full flex justify-center items-center p-4">
-        {user ? (
-          showAdminTest ? (
-            <AdminOnlyPage />
-          ) : (
-            <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-lg w-full">
-              <h2 className="text-3xl font-bold text-green-600 mb-4">You are logged in!</h2>
-              <p className="text-gray-700 mb-1">
-                <span className="font-semibold">Name:</span> {profile?.full_name}
-              </p>
-              <p className="text-gray-700 mb-1">
-                <span className="font-semibold">Email:</span> {user.email}
-              </p>
-              <p className="text-gray-700 mb-4">
-                <span className="font-semibold">Role:</span>{' '}
-                <span className={`px-2 py-0.5 rounded text-sm font-bold ${
-                  profile?.role === 'admin'
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'bg-green-100 text-green-700'
-                }`}>
-                  {profile?.role ?? 'loading...'}
-                </span>
-              </p>
-              <p className="text-gray-500 text-xs">User ID: {user.id}</p>
-            </div>
-          )
-        ) : (
-          showLogin ? (
-            <LoginPage onToggleMode={() => setShowLogin(false)} />
-          ) : (
-            <RegistrationPage onToggleMode={() => setShowLogin(true)} />
-          )
-        )}
-      </main>
-
-    </div>
-  );
-}
-
-export default App;
