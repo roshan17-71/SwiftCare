@@ -16,6 +16,22 @@ export async function getDoctors() {
 }
 
 /**
+ * Fetch active doctors only (for patient browsing).
+ */
+export async function getActiveDoctors() {
+  const { data, error } = await supabase
+    .from('doctors')
+    .select('*')
+    .eq('is_active', true)
+    .order('full_name', { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+  return data || [];
+}
+
+/**
  * Fetch a single doctor by their UUID.
  */
 export async function getDoctorById(id) {
