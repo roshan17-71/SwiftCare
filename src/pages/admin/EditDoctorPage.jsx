@@ -68,6 +68,15 @@ export default function EditDoctorPage() {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file (PNG, JPG, JPEG, etc.).');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Photo size must be under 5MB.');
+        return;
+      }
+      setError(null);
       setPhotoFile(file);
       setPhotoPreview(URL.createObjectURL(file));
     }
@@ -76,6 +85,13 @@ export default function EditDoctorPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    const expYears = formData.experience_years ? parseInt(formData.experience_years, 10) : null;
+    if (expYears !== null && (isNaN(expYears) || expYears < 0 || expYears > 70)) {
+      setError('Experience must be a realistic number between 0 and 70 years.');
+      return;
+    }
+
     setSaveLoading(true);
 
     try {
@@ -92,7 +108,7 @@ export default function EditDoctorPage() {
         specialization: formData.specialization.trim(),
         qualification: formData.qualification ? formData.qualification.trim() : null,
         department: formData.department ? formData.department.trim() : null,
-        experience_years: formData.experience_years ? parseInt(formData.experience_years, 10) : null,
+        experience_years: expYears,
         about: formData.about ? formData.about.trim() : null,
         photo_url: photoUrl,
         is_active: formData.is_active,

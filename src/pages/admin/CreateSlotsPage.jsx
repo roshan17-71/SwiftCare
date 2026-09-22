@@ -62,6 +62,11 @@ export default function CreateSlotsPage() {
       return;
     }
 
+    if (slotDate < getTodayDateString()) {
+      setError('Cannot generate appointment slots for past dates.');
+      return;
+    }
+
     if (previewSlots.length === 0) {
       setError('Invalid time range or duration. OPD End Time must be later than Start Time.');
       return;
@@ -147,6 +152,7 @@ export default function CreateSlotsPage() {
             <input
               type="date"
               required
+              min={getTodayDateString()}
               value={slotDate}
               onChange={(e) => setSlotDate(e.target.value)}
               className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
