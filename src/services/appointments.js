@@ -131,3 +131,64 @@ export async function cancelAppointment(appointmentId) {
   }
   return data;
 }
+
+/**
+ * ADMIN ONLY: Fetch all appointments across every patient and doctor.
+ * RLS ensures only admins actually get data from this query.
+ */
+export async function getAllAppointments() {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(`
+      id,
+      status,
+      created_at,
+      slot_id,
+      doctor_id,
+      patient_id,
+      doctors (
+        id,
+        full_name,
+        specialization,
+        department
+      ),
+      appointment_slots (
+        id,
+        slot_date,
+        start_time,
+        end_time
+      ),
+      profiles (
+        id,
+        full_name,
+        phone
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+  return data || [];
+}
+
+/**
+ * ADMIN ONLY: Mark an appointment as completed.
+ */
+export async function markCompleted(appointmentId) {
+  if (!appointmentId) {
+    throw new Error('No appointment ID provided.');
+  }
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .update({ status: 'completed' })
+    .eq('id', appointmentId)
+    .select()
+    .single();
+
+  if (error) {
+    throw error;
+  }
+  return data;
+}
